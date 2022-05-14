@@ -1,2 +1,4 @@
 rootProject.name='FirstLineCode'
 include ':app'
+include ':app:chapter05'
+include ':app:chapter09'
