@@ -10,6 +10,18 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.learn.chapter09.entity.App;
+import com.learn.chapter09.util.ContentHandler;
+import com.learn.chapter09.util.HttpUtil;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -24,7 +36,12 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.List;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParserFactory;
+
+import okhttp3.Call;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -102,37 +119,54 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 //    使用OkHttp库发送Http请求
     private void sendRequestWithOkHttp(){
-//        开启线程发送网络请求
-        new Thread(new Runnable() {
+////        开启线程发送网络请求
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+////                创建一个OkHttpClient实例
+//                OkHttpClient okHttpClient=new OkHttpClient();
+////                创建Request对象，发起Http请求,可以在build之前丰富这个Request对象
+//                Request request =new Request.Builder()
+//                        .url("http://192.168.1.131/get_data.json")
+//                        .build();
+////                post请求 1.构建resquestBody存放提交参数 2.Request.Builder().post()方法传入RequestBody
+////                RequestBody requestBody = new FormBody.Builder()
+////                                                      .add("username","xuminjie")
+////                                                      .add("password",123456)
+////                                                       .build();
+////
+////                Request request1 = new Request.Builder()
+////                                              .post(requestBody)
+////                                              .url("http://www.baidu.com")
+////                                              .build();
+////                调用OkHttpClient的newCall()方法来创建一个Call对象，并调用execute()方法来发送并获取服务器返回数据
+//                try {
+//                    Response response = okHttpClient.newCall(request).execute();
+//                    String responseData = response.body().string();
+////                    showResponse(responseData);
+////                    parseXMLWithPull(responseData);
+////                    parseXMLWithSAX(responseData);
+////                      parseJSONWithJSONObject(responseData);
+//                    parseJSonWithGSON(responseData);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }).start();
+
+        HttpUtil.sendOkHttpRequest("http://www.baidu.com", new okhttp3.Callback() {
             @Override
-            public void run() {
-//                创建一个OkHttpClient实例
-                OkHttpClient okHttpClient=new OkHttpClient();
-//                创建Request对象，发起Http请求,可以在build之前丰富这个Request对象
-                Request request =new Request.Builder()
-                        .url("http://192.168.1.131/get_data.xml")
-                        .build();
-//                post请求 1.构建resquestBody存放提交参数 2.Request.Builder().post()方法传入RequestBody
-//                RequestBody requestBody = new FormBody.Builder()
-//                                                      .add("username","xuminjie")
-//                                                      .add("password",123456)
-//                                                       .build();
-//
-//                Request request1 = new Request.Builder()
-//                                              .post(requestBody)
-//                                              .url("http://www.baidu.com")
-//                                              .build();
-//                调用OkHttpClient的newCall()方法来创建一个Call对象，并调用execute()方法来发送并获取服务器返回数据
-                try {
-                    Response response = okHttpClient.newCall(request).execute();
-                    String responseData = response.body().string();
-//                    showResponse(responseData);
-                    parseXMLWithPull(responseData);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            public void onFailure(Call call, IOException e) {
+//                对异常情况处理
             }
-        }).start();
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                //得到服务器响应内容
+                String responseData = response.body().string();
+                showResponse(responseData);
+            }
+        });
     }
 
 
@@ -192,7 +226,54 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
     }
+
+    private void parseXMLWithSAX(String xmlData){
+//        创建SAXParserFactory对象
+        SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+        try {
+//            获取XMLReader对象
+            XMLReader xmlReader = saxParserFactory.newSAXParser().getXMLReader();
+            ContentHandler contentHandler = new ContentHandler();
+//            XMLReader传入ContentHandler实例
+            xmlReader.setContentHandler(contentHandler);
+//            调用parse方法进行解析
+            xmlReader.parse(new InputSource(new StringReader(xmlData)));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+//    使用JSONObect解析Jason数据
+    private void parseJSONWithJSONObject(String jsonData){
+//        JSONArray接收服务器传来的数据
+        try {
+            JSONArray jsonArray = new JSONArray(jsonData);
+//            使用JSONOject循环取出
+            for(int i=0;i<jsonArray.length();i++){
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                String id = jsonObject.getString("id");
+                String name = jsonObject.getString("name");
+                String version = jsonObject.getString("version");
+                Log.d("MainActivity","id is "+id);
+                Log.d("MainActivity","name is "+name);
+                Log.d("MainActivity","version is "+version);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+//    使用GSON库解析Jason数据
+    private void parseJSonWithGSON(String jsonData){
+        Gson gson = new Gson();
+//        借助TypeToken将期望解析成的数据类型传入到fromJson
+        List<App> appList = gson.fromJson(jsonData,new TypeToken<List<App>>(){}.getType());//匿名内部类
+        for (App app : appList) {
+            Log.d("MainActivity","id is"+app.getId());
+            Log.d("MainActivity","name is"+app.getName());
+            Log.d("MainActivity","version is"+app.getVersion());
+        }
+    }
+
 }
