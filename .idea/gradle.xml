@@ -11,9 +11,11 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/app/chapter03" />
             <option value="$PROJECT_DIR$/app/chapter05" />
             <option value="$PROJECT_DIR$/app/chapter09" />
             <option value="$PROJECT_DIR$/app/chapter10" />
+            <option value="$PROJECT_DIR$/app/chapter10-priactice" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />
